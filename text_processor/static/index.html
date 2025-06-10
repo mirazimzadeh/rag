@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Chat</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>Document Chat</h1>
+            <div class="upload-section">
+                <input type="file" id="fileInput" webkitdirectory directory multiple style="display: none;">
+                <button id="uploadBtn" class="btn primary">Upload Documents</button>
+                <div id="uploadStatus" class="status"></div>
+            </div>
+        </header>
+
+        <main>
+            <div class="chat-container">
+                <div id="chatMessages" class="chat-messages">
+                    <div class="message system">
+                        Welcome! Upload some documents and start chatting.
+                    </div>
+                </div>
+                <div class="chat-input-container">
+                    <textarea id="chatInput" placeholder="Type your message..." rows="1"></textarea>
+                    <button id="sendBtn" class="btn primary" disabled>Send</button>
+                </div>
+            </div>
+            <div class="sidebar">
+                <div class="model-selector">
+                    <label for="modelSelect">Model:</label>
+                    <select id="modelSelect">
+                        <option value="llama2">Llama 2</option>
+                        <option value="mistral">Mistral</option>
+                        <option value="codellama">CodeLlama</option>
+                    </select>
+                </div>
+                <div class="stats">
+                    <h3>Statistics</h3>
+                    <div id="statsContent">
+                        No documents processed yet.
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+
+</html>
