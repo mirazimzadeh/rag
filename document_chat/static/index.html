@@ -12,52 +12,63 @@
     <div class="container">
         <header>
             <h1>Document Chat</h1>
-            <div class="upload-section">
-                <input type="file" id="fileInput" multiple accept=".pdf,.docx,.txt">
-                <button id="uploadBtn">Upload Documents</button>
+            <div class="stats" id="stats">
+                <div class="stat-item">
+                    <span class="stat-label">Documents:</span>
+                    <span class="stat-value" id="doc-count">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Chunks:</span>
+                    <span class="stat-value" id="chunk-count">0</span>
+                </div>
             </div>
         </header>
 
         <main>
-            <div class="chat-container">
-                <div class="rag-controls">
-                    <div class="rag-toggle">
-                        <input type="checkbox" id="useRag" checked>
-                        <label for="useRag">Use RAG (Retrieval Augmented Generation)</label>
-                    </div>
-                    <div id="ragParams" class="rag-params">
-                        <h3>RAG Parameters</h3>
-                        <div class="control-group">
-                            <label for="maxChunks">Max Context Chunks:</label>
-                            <input type="number" id="maxChunks" min="1" max="20" value="5">
+            <div class="upload-section">
+                <div class="upload-container">
+                    <h2>Upload Documents</h2>
+                    <div class="upload-options">
+                        <div class="file-upload">
+                            <label for="file-input" class="upload-button">Select Files</label>
+                            <input type="file" id="file-input" multiple accept=".pdf,.docx,.txt">
+                            <span id="file-list"></span>
                         </div>
-                        <div class="control-group">
-                            <label for="similarityThreshold">Similarity Threshold:</label>
-                            <input type="range" id="similarityThreshold" min="0" max="100" value="70">
-                            <span id="similarityValue">0.7</span>
+                        <div class="folder-upload">
+                            <label for="folder-input" class="upload-button">Select Folder</label>
+                            <input type="file" id="folder-input" webkitdirectory directory multiple>
+                            <span id="folder-list"></span>
                         </div>
                     </div>
-                    <div class="control-group">
-                        <label for="modelSelect">Model:</label>
-                        <select id="modelSelect">
-                            <option value="llama2">Llama 2</option>
-                            <option value="mistral">Mistral</option>
-                            <option value="codellama">CodeLlama</option>
-                        </select>
-                    </div>
-                </div>
-                <div id="chatMessages" class="chat-messages"></div>
-                <div class="chat-input">
-                    <textarea id="messageInput" placeholder="Type your message..."></textarea>
-                    <button id="sendBtn">Send</button>
+                    <button id="upload-button" class="primary-button">Process Documents</button>
                 </div>
             </div>
-            <div class="stats-container">
-                <h2>System Stats</h2>
-                <div id="statsContent"></div>
-                <div class="vector-stats">
-                    <h3>Vector Store Stats</h3>
-                    <div id="vectorStatsContent"></div>
+
+            <div class="chat-section">
+                <div class="rag-controls">
+                    <div class="rag-toggle">
+                        <input type="checkbox" id="use-rag" checked>
+                        <label for="use-rag">Use RAG</label>
+                    </div>
+                    <div class="rag-params" id="rag-params">
+                        <div class="param-group">
+                            <label for="max-chunks">Max Chunks:</label>
+                            <input type="number" id="max-chunks" value="5" min="1" max="20">
+                        </div>
+                        <div class="param-group">
+                            <label for="similarity-threshold">Similarity Threshold:</label>
+                            <input type="range" id="similarity-threshold" min="0" max="100" value="70">
+                            <span id="similarity-value">0.7</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chat-container">
+                    <div class="chat-messages" id="chat-messages"></div>
+                    <div class="chat-input">
+                        <textarea id="message-input" placeholder="Type your message..."></textarea>
+                        <button id="send-button" class="primary-button">Send</button>
+                    </div>
                 </div>
             </div>
         </main>

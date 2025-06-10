@@ -1,18 +1,29 @@
 """
-Document Chat - A document-based chat application using Ollama and FAISS.
+Document Chat Application
+A powerful document chat application with RAG capabilities.
 """
 
-from .core.document_processor import DocumentProcessor
-from .core.vector_store import VectorStore, SearchResult
-from .core.llm_client import OllamaClient
-from .core.chat_manager import ChatManager, ChatMessage
+from .src.api import app
+from .src import (
+    DocumentProcessor,
+    VectorStore,
+    OllamaClient,
+    ChatManager,
+    split_text,
+    create_faiss_index,
+    get_embeddings
+)
 
 __version__ = "0.1.0"
+
 __all__ = [
+    "app",
     "DocumentProcessor",
     "VectorStore",
-    "SearchResult",
     "OllamaClient",
     "ChatManager",
-    "ChatMessage"
+    "split_text",
+    "create_faiss_index",
+    "get_embeddings",
+    "__version__"
 ] 

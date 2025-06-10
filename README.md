@@ -1,94 +1,135 @@
 # Document Chat
 
-A document-based chat application that allows you to upload documents and chat with them using Ollama and FAISS for semantic search.
+A powerful document chat application that combines document processing, vector storage, and LLM-based chat capabilities. This application allows you to upload documents, process them, and chat with them using advanced RAG (Retrieval-Augmented Generation) techniques.
 
 ## Features
 
-- Upload and process PDF and DOCX documents
-- Extract text and create semantic embeddings
-- Store document chunks in a FAISS vector database
-- Chat with documents using Ollama LLM
-- Modern web interface for document upload and chat
-- Real-time statistics and monitoring
+- **Document Processing**
 
-## Requirements
+  - Support for PDF, DOCX, and TXT files
+  - Automatic text extraction and chunking
+  - Metadata preservation
 
-- Python 3.8 or higher
-- Ollama installed and running locally (or accessible via API)
+- **Vector Storage**
+
+  - FAISS-based vector database
+  - Efficient similarity search
+  - Configurable chunking parameters
+
+- **Chat Interface**
+
+  - Modern web UI
+  - Real-time chat with documents
+  - RAG controls for fine-tuning responses
+  - Document source tracking
+
+- **LLM Integration**
+  - Ollama model support
+  - Configurable model parameters
+  - Context-aware responses
 
 ## Installation
 
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/yourusername/document-chat.git
+git clone <repository-url>
 cd document-chat
 ```
 
-2. Install the package:
+2. Create a virtual environment:
 
 ```bash
-pip install -e .
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+3. Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+4. Install Ollama:
+
+Follow the instructions at [Ollama's website](https://ollama.ai) to install Ollama on your system.
+
+5. Pull the required model:
+
+```bash
+ollama pull gemma:2b-it-qat
 ```
 
 ## Usage
 
-1. Start the application:
+1. Start the FastAPI server:
 
 ```bash
-document-chat
+python -m uvicorn document_chat.api:app --reload --host 0.0.0.0 --port 8000
 ```
 
-2. Open your browser and navigate to `http://localhost:8000`
+2. Open your browser and navigate to:
 
-3. Upload your documents using the web interface
+```
+http://localhost:8000
+```
+
+3. Upload documents using the web interface
 
 4. Start chatting with your documents!
 
+## Configuration
+
+The application can be configured through the `config.py` file:
+
+- **Ollama Settings**
+
+  - Model selection
+  - API configuration
+  - Model parameters
+
+- **Vector Store Settings**
+
+  - Chunk size and overlap
+  - Embedding model
+  - Similarity metrics
+
+- **RAG Settings**
+  - Maximum context chunks
+  - Similarity thresholds
+  - Model selection
+
 ## API Endpoints
 
-- `GET /`: Web interface
 - `POST /upload`: Upload and process documents
-- `POST /chat`: Send a chat message
+- `POST /chat`: Send a message and get a response
 - `GET /stats`: Get system statistics
-- `GET /models`: List available Ollama models
 
-## Development
-
-### Project Structure
+## Project Structure
 
 ```
 document_chat/
+├── api.py              # FastAPI application
+├── config.py           # Configuration settings
 ├── core/
-│   ├── document_processor.py
-│   ├── vector_store.py
-│   ├── llm_client.py
-│   └── chat_manager.py
+│   ├── document_processor.py  # Document processing
+│   ├── vector_store.py        # Vector storage
+│   └── llm_client.py          # LLM integration
 ├── static/
-│   ├── index.html
-│   ├── styles.css
-│   └── script.js
-├── api.py
-└── __init__.py
+│   ├── index.html     # Web interface
+│   ├── styles.css     # Styling
+│   └── script.js      # Frontend logic
+└── utils/
+    └── helpers.py     # Utility functions
 ```
 
-### Running Tests
+## Contributing
 
-```bash
-pytest
-```
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
 
 ## Acknowledgments
 

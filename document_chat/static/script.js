@@ -1,27 +1,31 @@
 // DOM Elements
-const fileInput = document.getElementById('fileInput');
-const uploadBtn = document.getElementById('uploadBtn');
-const messageInput = document.getElementById('messageInput');
-const sendBtn = document.getElementById('sendBtn');
-const chatMessages = document.getElementById('chatMessages');
-const statsContent = document.getElementById('statsContent');
-const vectorStatsContent = document.getElementById('vectorStatsContent');
-
-// RAG Controls
-const useRagCheckbox = document.getElementById('useRag');
-const ragParamsDiv = document.getElementById('ragParams');
-const maxChunksInput = document.getElementById('maxChunks');
-const similarityThresholdInput = document.getElementById('similarityThreshold');
-const similarityValueDisplay = document.getElementById('similarityValue');
-const modelSelect = document.getElementById('modelSelect');
+const fileInput = document.getElementById('file-input');
+const folderInput = document.getElementById('folder-input');
+const fileList = document.getElementById('file-list');
+const folderList = document.getElementById('folder-list');
+const uploadButton = document.getElementById('upload-button');
+const messageInput = document.getElementById('message-input');
+const sendButton = document.getElementById('send-button');
+const chatMessages = document.getElementById('chat-messages');
+const useRagCheckbox = document.getElementById('use-rag');
+const ragParamsDiv = document.getElementById('rag-params');
+const maxChunksInput = document.getElementById('max-chunks');
+const similarityThresholdInput = document.getElementById('similarity-threshold');
+const similarityValueDisplay = document.getElementById('similarity-value');
+const docCount = document.getElementById('doc-count');
+const chunkCount = document.getElementById('chunk-count');
 
 // State
-let chatHistory = [];
 let isProcessing = false;
+let selectedFiles = new Set();
+let selectedFolders = new Set();
+let defaultModel = 'gemma:2b-it-qat'; // Will be updated from config
 
 // Event Listeners
-uploadBtn.addEventListener('click', handleUpload);
-sendBtn.addEventListener('click', handleSend);
+fileInput.addEventListener('change', handleFileSelect);
+folderInput.addEventListener('change', handleFolderSelect);
+uploadButton.addEventListener('click', handleUpload);
+sendButton.addEventListener('click', handleSend);
 messageInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
@@ -29,90 +33,106 @@ messageInput.addEventListener('keypress', (e) => {
     }
 });
 
-// RAG Control Event Listeners
-useRagCheckbox.addEventListener('change', (e) => {
-    ragParamsDiv.classList.toggle('hidden', !e.target.checked);
+useRagCheckbox.addEventListener('change', () => {
+    ragParamsDiv.style.display = useRagCheckbox.checked ? 'grid' : 'none';
 });
 
-similarityThresholdInput.addEventListener('input', (e) => {
-    const value = e.target.value / 100;
+similarityThresholdInput.addEventListener('input', () => {
+    const value = similarityThresholdInput.value / 100;
     similarityValueDisplay.textContent = value.toFixed(2);
 });
 
-// Error Handling
-function showError(element, message) {
-    const errorDiv = document.createElement('div');
-    errorDiv.className = 'error-message';
-    errorDiv.textContent = message;
-    element.classList.add('input-error');
-    element.parentNode.insertBefore(errorDiv, element.nextSibling);
-    setTimeout(() => {
-        errorDiv.remove();
-        element.classList.remove('input-error');
-    }, 5000);
+// File Selection Handlers
+function handleFileSelect(event) {
+    const files = Array.from(event.target.files);
+    files.forEach(file => {
+        if (isValidFile(file)) {
+            selectedFiles.add(file);
+        }
+    });
+    updateFileList();
 }
 
-function setLoading(isLoading) {
-    isProcessing = isLoading;
-    document.body.classList.toggle('loading', isLoading);
-    sendBtn.disabled = isLoading;
-    uploadBtn.disabled = isLoading;
+function handleFolderSelect(event) {
+    const files = Array.from(event.target.files);
+    const folder = files[0]?.webkitRelativePath.split('/')[0];
+    if (folder) {
+        selectedFolders.add(folder);
+        files.forEach(file => {
+            if (isValidFile(file)) {
+                selectedFiles.add(file);
+            }
+        });
+    }
+    updateFileList();
 }
 
-// Functions
+function isValidFile(file) {
+    const validTypes = ['.pdf', '.docx', '.txt'];
+    const extension = '.' + file.name.split('.').pop().toLowerCase();
+    return validTypes.includes(extension);
+}
+
+function updateFileList() {
+    const fileNames = Array.from(selectedFiles).map(file => file.name);
+    const folderNames = Array.from(selectedFolders);
+
+    fileList.textContent = fileNames.length > 0
+        ? `Selected files: ${fileNames.join(', ')}`
+        : '';
+
+    folderList.textContent = folderNames.length > 0
+        ? `Selected folders: ${folderNames.join(', ')}`
+        : '';
+}
+
+// Upload Handler
 async function handleUpload() {
-    if (isProcessing) return;
-
-    const files = fileInput.files;
-    if (files.length === 0) {
-        showError(fileInput, 'Please select files to upload');
-        return;
-    }
-
-    const formData = new FormData();
-    for (const file of files) {
-        formData.append('files', file);
-    }
+    if (isProcessing || selectedFiles.size === 0) return;
 
     try {
         setLoading(true);
+        const formData = new FormData();
+        selectedFiles.forEach(file => {
+            formData.append('files', file);
+        });
+
         const response = await fetch('/upload', {
             method: 'POST',
             body: formData
         });
 
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.detail || 'Upload failed');
+            throw new Error(`Upload failed: ${response.statusText}`);
         }
 
         const result = await response.json();
-        addMessage('assistant', `Successfully processed ${result.message}`);
+        showSuccess('Documents processed successfully');
         updateStats();
+
+        // Clear selections
+        selectedFiles.clear();
+        selectedFolders.clear();
+        fileInput.value = '';
+        folderInput.value = '';
+        updateFileList();
     } catch (error) {
-        console.error('Upload error:', error);
-        showError(uploadBtn, error.message || 'Error uploading files. Please try again.');
+        showError(error.message);
     } finally {
         setLoading(false);
-        fileInput.value = '';
     }
 }
 
+// Chat Handlers
 async function handleSend() {
-    if (isProcessing) return;
-
     const message = messageInput.value.trim();
-    if (!message) {
-        showError(messageInput, 'Please enter a message');
-        return;
-    }
-
-    // Add user message to chat
-    addMessage('user', message);
-    messageInput.value = '';
+    if (!message || isProcessing) return;
 
     try {
         setLoading(true);
+        addMessage(message, 'user');
+        messageInput.value = '';
+
         const response = await fetch('/chat', {
             method: 'POST',
             headers: {
@@ -120,103 +140,84 @@ async function handleSend() {
             },
             body: JSON.stringify({
                 message,
-                history: chatHistory,
                 rag_params: useRagCheckbox.checked ? {
                     max_chunks: parseInt(maxChunksInput.value),
                     similarity_threshold: parseFloat(similarityThresholdInput.value) / 100,
-                    model: modelSelect.value
+                    model: defaultModel
                 } : null
             })
         });
 
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.detail || 'Chat request failed');
+            throw new Error(`Chat failed: ${response.statusText}`);
         }
 
         const result = await response.json();
-        addMessage('assistant', result.message.content, result.message.metadata);
+        addMessage(result.message.content, 'assistant', result.message.metadata);
         updateStats();
     } catch (error) {
-        console.error('Chat error:', error);
-        showError(sendBtn, error.message || 'Error processing your message. Please try again.');
+        showError(error.message);
     } finally {
         setLoading(false);
     }
 }
 
-function addMessage(role, content, metadata = null) {
+// UI Helpers
+function addMessage(content, type, metadata = null) {
     const messageDiv = document.createElement('div');
-    messageDiv.className = `message ${role}-message`;
+    messageDiv.className = `message ${type}-message`;
 
     const contentDiv = document.createElement('div');
-    contentDiv.className = 'message-content';
     contentDiv.textContent = content;
     messageDiv.appendChild(contentDiv);
 
     if (metadata) {
         const metadataDiv = document.createElement('div');
         metadataDiv.className = 'message-metadata';
-        metadataDiv.textContent = `Model: ${metadata.model} | Context chunks: ${metadata.context_chunks}`;
+        metadataDiv.textContent = `Source: ${metadata.source || 'Unknown'}`;
         messageDiv.appendChild(metadataDiv);
     }
 
     chatMessages.appendChild(messageDiv);
     chatMessages.scrollTop = chatMessages.scrollHeight;
-
-    // Update chat history
-    chatHistory.push({
-        role,
-        content,
-        metadata
-    });
 }
 
 async function updateStats() {
     try {
         const response = await fetch('/stats');
-        if (!response.ok) {
-            throw new Error('Failed to fetch stats');
-        }
+        if (!response.ok) throw new Error('Failed to fetch stats');
 
         const stats = await response.json();
-        displayStats(stats);
+        docCount.textContent = stats.vector_store_stats.document_count || 0;
+        chunkCount.textContent = stats.vector_store_stats.chunk_count || 0;
     } catch (error) {
-        console.error('Stats error:', error);
-        showError(statsContent, 'Error updating statistics');
+        console.error('Error updating stats:', error);
     }
 }
 
-function displayStats(stats) {
-    const { chat_stats, vector_store_stats } = stats;
-
-    // Display chat stats
-    let chatStatsHtml = `
-        <div class="stat-group">
-            <h3>Chat Stats</h3>
-            <p>Model: ${chat_stats.model}</p>
-            <p>Max Context Chunks: ${chat_stats.max_context_chunks}</p>
-            <p>Similarity Threshold: ${chat_stats.similarity_threshold}</p>
-        </div>
-    `;
-    statsContent.innerHTML = chatStatsHtml;
-
-    // Display vector store stats
-    let vectorStatsHtml = `
-        <div class="stat-group">
-            <h3>Vector Store Stats</h3>
-            <p>Total Chunks: ${vector_store_stats.total_chunks}</p>
-            <p>Index Dimension: ${vector_store_stats.index_dimension}</p>
-            <p>Embedding Model: ${vector_store_stats.embedding_model}</p>
-            <p>Chunk Size: ${vector_store_stats.chunk_size}</p>
-            <p>Chunk Overlap: ${vector_store_stats.chunk_overlap}</p>
-            <p>Similarity Metric: ${vector_store_stats.similarity_metric}</p>
-            <p>Has Metadata: ${vector_store_stats.has_metadata ? 'Yes' : 'No'}</p>
-            <p>GPU Enabled: ${vector_store_stats.use_gpu ? 'Yes' : 'No'}</p>
-        </div>
-    `;
-    vectorStatsContent.innerHTML = vectorStatsHtml;
+function showError(message) {
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'error-message';
+    errorDiv.textContent = message;
+    chatMessages.appendChild(errorDiv);
+    setTimeout(() => errorDiv.remove(), 5000);
 }
 
-// Initial setup
+function showSuccess(message) {
+    const successDiv = document.createElement('div');
+    successDiv.className = 'success-message';
+    successDiv.textContent = message;
+    chatMessages.appendChild(successDiv);
+    setTimeout(() => successDiv.remove(), 5000);
+}
+
+function setLoading(loading) {
+    isProcessing = loading;
+    uploadButton.disabled = loading;
+    sendButton.disabled = loading;
+    messageInput.disabled = loading;
+    document.body.classList.toggle('loading', loading);
+}
+
+// Initialize
 updateStats(); 
